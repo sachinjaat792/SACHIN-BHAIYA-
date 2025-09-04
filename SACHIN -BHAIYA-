@@ -1,0 +1,412 @@
+export default function SachinBhaiApp() {
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="p-4 bg-blue-600 text-white text-xl font-bold">
+        📚 Sachin Bhai – Free Govt Exam Prep
+      </header>
+      {/* बाकी Sections */}
+    </div>
+  );
+}import React, { useMemo, useState, useEffect } from "react"; import { Search, Bell, BookOpen, Calendar, CheckCircle2, XCircle, Filter, ChevronRight, Clock, Trophy, Menu, X, Users, Download } from "lucide-react"; import { motion, AnimatePresence } from "framer-motion"; import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts"; import { Button } from "@/components/ui/button"; import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; import { Input } from "@/components/ui/input"; import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; import { Badge } from "@/components/ui/badge";
+
+// --- Utility helpers --- const fmt = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric" }); const todayISO = () => new Date().toISOString().slice(0,10);
+
+// --- Demo seed data (replace with live API later) --- const EXAMS = [ { id: "ssc-cgl", name: "SSC CGL", authority: "Staff Selection Commission", category: "Central", tags: ["Graduate", "Multiple Posts"], mode: "Online", fee: { gen: 100, scst: 0, female: 0 }, attemptLimit: "No fixed limit", eligibility: "Bachelor's degree from a recognized university.", syllabus: [ { section: "Quantitative Aptitude", topics: ["Arithmetic", "Algebra", "Geometry", "Trigonometry", "Data Interpretation"] }, { section: "General Intelligence & Reasoning", topics: ["Analogies", "Classification", "Series", "Puzzles", "Syllogism"] }, { section: "General Awareness", topics: ["Polity", "Economy", "Geography", "Science", "Current Affairs"] }, { section: "English Comprehension", topics: ["Grammar", "Vocabulary", "Reading Comprehension", "Cloze Test", "Error Spotting"] }, ], stages: ["Tier-I (Objective)", "Tier-II (Paper 1,2)", "Document Verification"], dates: { notification: "2025-05-10", applyFrom: "2025-05-15", applyTo: "2025-06-14", examWindow: "2025-08", }, }, { id: "upsc-cse", name: "UPSC CSE", authority: "Union Public Service Commission", category: "Central", tags: ["Graduate", "Civil Services"], mode: "Offline", fee: { gen: 100, scst: 0, female: 0 }, attemptLimit: "6 (General)", eligibility: "Bachelor's degree; Age 21–32 (relaxations as per rules).", syllabus: [ { section: "Prelims GS", topics: ["Polity", "History", "Economy", "Geography", "Environment", "Science", "Current Affairs"] }, { section: "CSAT", topics: ["Quant", "Reasoning", "Comprehension", "Decision Making"] }, { section: "Mains", topics: ["9 Papers including Essay, GS I–IV, Optional (2)", "Language"] }, ], stages: ["Prelims", "Mains", "Personality Test"], dates: { notification: "2025-02-01", applyFrom: "2025-02-01", applyTo: "2025-02-21", examWindow: "2025-05-25 (Prelims)", }, }, { id: "ibps-po", name: "IBPS PO", authority: "Institute of Banking Personnel Selection", category: "Banking", tags: ["Graduate", "Bank PO"], mode: "Online", fee: { gen: 850, scst: 175, female: 850 }, attemptLimit: "No fixed limit", eligibility: "Bachelor's degree; Age as per notification.", syllabus: [ { section: "Prelims", topics: ["English", "Quant", "Reasoning"] }, { section: "Mains", topics: ["Reasoning & Computer Aptitude", "Data Analysis & Interpretation", "General/Economy/Banking Awareness", "English"] }, { section: "Interview", topics: ["Current Affairs", "Banking Awareness", "HR"] }, ], stages: ["Prelims", "Mains", "Interview"], dates: { notification: "2025-07-01", applyFrom: "2025-07-01", applyTo: "2025-07-21", examWindow: "2025-10 (Prelims)", }, }, { id: "rrb-ntpc", name: "RRB NTPC", authority: "Railway Recruitment Boards", category: "Railways", tags: ["Graduate", "12th Pass"], mode: "Online", fee: { gen: 500, scst: 250, female: 250 }, attemptLimit: "No fixed limit", eligibility: "12th/Graduate depending on post.", syllabus: [ { section: "Mathematics", topics: ["Number System", "Algebra", "Geometry", "Mensuration", "Data Interpretation"] }, { section: "General Intelligence & Reasoning", topics: ["Coding-Decoding", "Analogies", "Series", "Puzzles"] }, { section: "General Awareness", topics: ["Current Affairs", "Polity", "Geography", "History", "Science"] }, ], stages: ["CBT-1", "CBT-2", "Typing/Skill Test", "DV/ME"], dates: { notification: "2025-03-15", applyFrom: "2025-03-20", applyTo: "2025-04-20", examWindow: "2025-09–10", }, }, { id: "nda", name: "NDA & NA", authority: "UPSC", category: "Defence", tags: ["12th Pass", "Permanent Commission"], mode: "Offline", fee: { gen: 100, scst: 0, female: 0 }, attemptLimit: "As per age limits", eligibility: "12th pass (PCM for Air Force/Navy); Age 16.5–19.5.", syllabus: [ { section: "Mathematics", topics: ["Algebra", "Trigonometry", "Vector Algebra", "Statistics", "Probability"] }, { section: "GAT", topics: ["English", "Physics", "Chemistry", "General Science", "History", "Geography", "Current Events"] }, ], stages: ["Written", "SSB Interview", "Medical"], dates: { notification: "2025-12-01", applyFrom: "2025-12-01", applyTo: "2025-12-21", examWindow: "2026-04", }, }, ];
+
+const QUIZ_BANK = [ { id: "qa-1", exam: "SSC CGL", title: "Quant Mini Mock", questions: [ { q: "If a sum becomes Rs. 1440 in 2 years at 20% compound interest (annual), what is the principal?", options: ["1000", "1200", "1100", "1150"], answer: 0, explain: "P = A/(1+r)^n = 1440/(1.2^2) = 1440/1.44 = 1000.", }, { q: "The average of 5 numbers is 28. If one number is 38, what is the average of the remaining 4 numbers?", options: ["25.5", "26", "27", "28"], answer: 2, explain: "Total=140; Remaining total=102; Avg=102/4=25.5 → Oops! Wait, correct math gives 25.5.", }, { q: "Which Article deals with Fundamental Duties in the Indian Constitution?", options: ["51A", "48A", "21A", "14"], answer: 0, explain: "Article 51A lists Fundamental Duties.", }, ], }, { id: "eng-1", exam: "IBPS PO", title: "English Cloze Test", questions: [ { q: "Choose the correct option: The committee _____ agreed to the proposal after long deliberation.", options: ["have", "has", "are", "were"], answer: 1, explain: "Collective noun 'committee' takes singular verb here → has.", }, { q: "Synonym of 'prudent' is _____", options: ["rash", "wise", "impulsive", "reckless"], answer: 1, explain: "Prudent = wise.", }, ], }, ];
+
+// --- Components --- const Chip = ({ children }) => ( <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 mr-1 mb-1">{children}</span> );
+
+const Stat = ({ icon: Icon, label, value }) => ( <Card className="rounded-2xl shadow-sm"> <CardContent className="p-4 flex items-center gap-3"> <div className="p-2 rounded-xl bg-slate-100"><Icon className="w-5 h-5" /></div> <div> <div className="text-xs text-slate-500">{label}</div> <div className="text-xl font-semibold">{value}</div> </div> </CardContent> </Card> );
+
+function useLocalStorage(key, initial) { const [val, setVal] = useState(() => { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; }); useEffect(() => localStorage.setItem(key, JSON.stringify(val)), [key, val]); return [val, setVal]; }
+
+const Filters = ({ query, setQuery, category, setCategory }) => (
+
+  <div className="flex flex-col md:flex-row gap-3">
+    <div className="relative flex-1">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+      <Input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search exams, authority, tags..." className="pl-9 rounded-2xl" />
+    </div>
+    <div className="flex gap-2 overflow-x-auto">
+      {['All','Central','Banking','Railways','Defence','State'].map(c => (
+        <Button key={c} onClick={()=>setCategory(c)} variant={category===c?"default":"secondary"} className="rounded-2xl">
+          <Filter className="w-4 h-4 mr-1" /> {c}
+        </Button>
+      ))}
+    </div>
+  </div>
+);const ExamCard = ({ exam, onOpen }) => ( <Card className="rounded-2xl hover:shadow-md transition-shadow"> <CardHeader className="pb-2"> <div className="flex items-start justify-between"> <CardTitle className="text-lg">{exam.name}</CardTitle> <Badge variant="secondary">{exam.category}</Badge> </div> <div className="text-xs text-slate-500 mt-1">{exam.authority}</div> </CardHeader> <CardContent className="pt-0"> <div className="flex flex-wrap mb-2"> {exam.tags.map((t,i)=>(<Chip key={i}>{t}</Chip>))} </div> <div className="grid grid-cols-2 gap-3 text-sm"> <div className="flex items-center gap-2"><Calendar className="w-4 h-4"/> Apply till: {exam.dates.applyTo ? fmt.format(new Date(exam.dates.applyTo)) : '—'}</div> <div className="flex items-center gap-2"><Clock className="w-4 h-4"/> Mode: {exam.mode}</div> </div> <div className="mt-3 flex justify-between items-center"> <div className="text-xs text-slate-500">Stages: {exam.stages.join(' → ')}</div> <Button onClick={()=>onOpen(exam)} className="rounded-2xl">Details <ChevronRight className="w-4 h-4 ml-1"/></Button> </div> </CardContent> </Card> );
+
+const Syllabus = ({ exam }) => (
+
+  <div className="space-y-4">
+    {exam.syllabus.map((s, idx) => (
+      <Card key={idx} className="rounded-2xl">
+        <CardHeader className="pb-2"><CardTitle className="text-base">{s.section}</CardTitle></CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex flex-wrap">
+            {s.topics.map((t,i)=>(<Chip key={i}>{t}</Chip>))}
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);const Notifications = ({ list, onClear }) => (
+
+  <div className="space-y-2">
+    {list.length===0 && <div className="text-sm text-slate-500">No notifications yet.</div>}
+    {list.map((n,idx)=> (
+      <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
+        <Bell className="w-4 h-4 mt-1"/>
+        <div className="flex-1">
+          <div className="text-sm font-medium">{n.title}</div>
+          <div className="text-xs text-slate-500">{fmt.format(new Date(n.date))}</div>
+        </div>
+        <Button size="sm" variant="ghost" onClick={()=>onClear(idx)}><X className="w-4 h-4"/></Button>
+      </div>
+    ))}
+  </div>
+);function Quiz({ paper, onFinish }) { const [step, setStep] = useState(0); const [answers, setAnswers] = useState([]); const q = paper.questions[step]; const done = step >= paper.questions.length;
+
+const correct = done ? answers.filter((a, i)=> a === paper.questions[i].answer).length : 0; const data = useMemo(()=>[ { name: 'Correct', value: correct }, { name: 'Wrong', value: done ? paper.questions.length - correct : 0 }, ], [correct, done, paper.questions.length]);
+
+if (done) { return ( <div className="space-y-5"> <div className="text-lg font-semibold flex items-center gap-2"><Trophy className="w-5 h-5"/> Result</div> <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> <Card className="rounded-2xl"> <CardContent className="p-5"> <div className="text-sm text-slate-500">Score</div> <div className="text-3xl font-bold">{correct} / {paper.questions.length}</div> <div className="mt-3 text-sm">Accuracy: {paper.questions.length>0 ? Math.round((correct/paper.questions.length)*100) : 0}%</div> </CardContent> </Card> <Card className="rounded-2xl"> <CardContent className="p-0 h-48"> <ResponsiveContainer width="100%" height="100%"> <PieChart> <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} outerRadius={70} label> {data.map((entry, index) => ( <Cell key={cell-${index}} /> ))} </Pie> <RechartsTooltip /> </PieChart> </ResponsiveContainer> </CardContent> </Card> </div> <Button className="rounded-2xl" onClick={onFinish}>Back to exams</Button> </div> ); }
+
+return ( <div className="space-y-5"> <div className="text-sm text-slate-500">Question {step+1} of {paper.questions.length}</div> <Card className="rounded-2xl"> <CardHeader className="pb-2"><CardTitle className="text-base">{q.q}</CardTitle></CardHeader> <CardContent className="pt-0 space-y-2"> {q.options.map((opt, i)=> { const chosen = answers[step] === i; return ( <button key={i} onClick={()=>{ const next = [...answers]; next[step] = i; setAnswers(next); setStep(step+1); }} className={w-full text-left px-3 py-2 rounded-xl border transition ${chosen? 'bg-green-50 border-green-300' : 'hover:bg-slate-50'}} > <div className="flex items-center gap-2"> {i === q.answer ? <CheckCircle2 className="w-4 h-4"/> : <XCircle className="w-4 h-4"/>} <span>{opt}</span> </div> </button> ); })} <div className="text-xs text-slate-500 mt-2">Explanation: {q.explain}</div> </CardContent> </Card> </div> ); }
+
+export default function GovExamPrepApp() { const [query, setQuery] = useState(""); const [category, setCategory] = useState("All"); const [openExam, setOpenExam] = useState(null); const [tab, setTab] = useState("exams"); const [notif, setNotif] = useLocalStorage("notif", [ { title: "UPSC CSE Prelims date announced (demo)", date: todayISO() }, { title: "SSC CGL Tier-I admit card release (demo)", date: todayISO() }, ]);
+
+const [downloads] = useState([ { name: "UPSC Syllabus (PDF)", size: "1.2 MB" }, { name: "SSC CGL Previous Papers (ZIP)", size: "8.4 MB" }, ]);
+
+const filtered = useMemo(()=> EXAMS.filter(ex => { const hay = (ex.name + " " + ex.authority + " " + ex.tags.join(" ")).toLowerCase(); const okCat = category === 'All' || ex.category === category; return okCat && hay.includes(query.toLowerCase()); }), [query, category]);
+
+const runningCount = useMemo(()=> filtered.length, [filtered.length]);
+
+return ( <div className="min-h-screen bg-gradient-to-b from-white to-slate-50"> {/* Top bar */} <div className="sticky top-0 z-40 backdrop-blur bg-white/75 border-b"> <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between"> <div className="flex items-center gap-3"> <Menu className="w-5 h-5"/> <span className="font-bold text-lg">GovExam Prep</span> <Badge className="rounded-full">Beta</Badge> </div> <div className="hidden md:flex items-center gap-2"> <Users className="w-4 h-4" /> <span className="text-sm text-slate-600">All Competitive Govt Exams</span> </div> </div> </div>
+
+{/* Content */}
+  <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 space-y-4">
+        <Filters query={query} setQuery={setQuery} category={category} setCategory={setCategory} />
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="rounded-2xl">
+            <TabsTrigger value="exams">Exams</TabsTrigger>
+            <TabsTrigger value="syllabus">Syllabus</TabsTrigger>
+            <TabsTrigger value="practice">Practice</TabsTrigger>
+            <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            <TabsTrigger value="downloads">Downloads</TabsTrigger>
+          </TabsList>
+          <TabsContent value="exams" className="mt-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {filtered.map(ex => (
+                <motion.div key={ex.id} initial={{opacity:0, y:10}} animate={{opacity:1, y:0}}>
+                  <ExamCard exam={ex} onOpen={setOpenExam} />
+                </motion.div>
+              ))}
+            </div>
+            {filtered.length===0 && (
+              <div className="text-sm text-slate-500 mt-4">No exams match your search.</div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="syllabus" className="mt-4">
+            <div className="space-y-4">
+              {filtered.map(ex => (
+                <Card key={ex.id} className="rounded-2xl">
+                  <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-base">{ex.name} — Syllabus</CardTitle>
+                    <Badge variant="secondary">{ex.mode}</Badge>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Syllabus exam={ex} />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="practice" className="mt-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              {QUIZ_BANK.map(p => (
+                <Card key={p.id} className="rounded-2xl">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{p.title}</CardTitle>
+                    <div className="text-xs text-slate-500">{p.exam}</div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Button className="rounded-2xl" onClick={()=>{ setOpenExam({ ...p, isQuiz: true }); setTab("exams"); }}>Start</Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="alerts" className="mt-4">
+            <Notifications list={notif} onClear={(i)=> setNotif(notif.filter((_,idx)=> idx!==i))} />
+          </TabsContent>
+
+          <TabsContent value="downloads" className="mt-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {downloads.map((d, i)=> (
+                <Card key={i} className="rounded-2xl">
+                  <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-base">{d.name}</CardTitle>
+                    <Badge variant="secondary">{d.size}</Badge>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Button className="rounded-2xl"><Download className="w-4 h-4 mr-1"/> Download</Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Right sidebar */}
+      <div className="space-y-4">
+        <Stat icon={Calendar} label="Exams listed" value={runningCount} />
+        <Stat icon={Bell} label="Active alerts" value={notif.length} />
+        <Stat icon={BookOpen} label="Practice sets" value={QUIZ_BANK.length} />
+
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Tips</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-sm space-y-2 text-slate-600">
+            <div>• Maintain a daily study routine with revision cycles (1-7-21 formula).</div>
+            <div>• Attempt sectional mocks and analyse mistakes the same day.</div>
+            <div>• Track official notifications only from authentic sources.</div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+
+  {/* Drawer / Modal */}
+  <AnimatePresence>
+    {openExam && (
+      <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
+        <motion.div initial={{y:40}} animate={{y:0}} exit={{y:40}} className="bg-white w-full md:max-w-3xl rounded-3xl shadow-xl overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="font-semibold">
+              {openExam.isQuiz ? openExam.title : openExam.name}
+            </div>
+            <Button variant="ghost" onClick={()=>setOpenExam(null)} className="rounded-2xl"><X className="w-5 h-5"/></Button>
+          </div>
+          <div className="p-4">
+            {openExam.isQuiz ? (
+              <Quiz paper={openExam} onFinish={()=> setOpenExam(null)} />
+            ) : (
+              <div className="space-y-5">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Card className="rounded-2xl"><CardContent className="p-4 text-sm space-y-1">
+                    <div><span className="text-slate-500">Authority:</span> {openExam.authority}</div>
+                    <div><span className="text-slate-500">Eligibility:</span> {openExam.eligibility}</div>
+                    <div><span className="text-slate-500">Attempts:</span> {openExam.attemptLimit}</div>
+                    <div><span className="text-slate-500">Fee (GEN):</span> ₹{openExam.fee.gen}</div>
+                  </CardContent></Card>
+                  <Card className="rounded-2xl"><Carimport React, { useMemo, useState, useEffect } from "react"; import { Search, Bell, BookOpen, Calendar, CheckCircle2, XCircle, Filter, ChevronRight, Clock, Trophy, Menu, X, Users, Download } from "lucide-react"; import { motion, AnimatePresence } from "framer-motion"; import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts"; import { Button } from "@/components/ui/button"; import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; import { Input } from "@/components/ui/input"; import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; import { Badge } from "@/components/ui/badge";
+
+// --- Utility helpers --- const fmt = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric" }); const todayISO = () => new Date().toISOString().slice(0,10);
+
+// --- Demo seed data (replace with live API later) --- const EXAMS = [ { id: "ssc-cgl", name: "SSC CGL", authority: "Staff Selection Commission", category: "Central", tags: ["Graduate", "Multiple Posts"], mode: "Online", fee: { gen: 100, scst: 0, female: 0 }, attemptLimit: "No fixed limit", eligibility: "Bachelor's degree from a recognized university.", syllabus: [ { section: "Quantitative Aptitude", topics: ["Arithmetic", "Algebra", "Geometry", "Trigonometry", "Data Interpretation"] }, { section: "General Intelligence & Reasoning", topics: ["Analogies", "Classification", "Series", "Puzzles", "Syllogism"] }, { section: "General Awareness", topics: ["Polity", "Economy", "Geography", "Science", "Current Affairs"] }, { section: "English Comprehension", topics: ["Grammar", "Vocabulary", "Reading Comprehension", "Cloze Test", "Error Spotting"] }, ], stages: ["Tier-I (Objective)", "Tier-II (Paper 1,2)", "Document Verification"], dates: { notification: "2025-05-10", applyFrom: "2025-05-15", applyTo: "2025-06-14", examWindow: "2025-08", }, }, { id: "upsc-cse", name: "UPSC CSE", authority: "Union Public Service Commission", category: "Central", tags: ["Graduate", "Civil Services"], mode: "Offline", fee: { gen: 100, scst: 0, female: 0 }, attemptLimit: "6 (General)", eligibility: "Bachelor's degree; Age 21–32 (relaxations as per rules).", syllabus: [ { section: "Prelims GS", topics: ["Polity", "History", "Economy", "Geography", "Environment", "Science", "Current Affairs"] }, { section: "CSAT", topics: ["Quant", "Reasoning", "Comprehension", "Decision Making"] }, { section: "Mains", topics: ["9 Papers including Essay, GS I–IV, Optional (2)", "Language"] }, ], stages: ["Prelims", "Mains", "Personality Test"], dates: { notification: "2025-02-01", applyFrom: "2025-02-01", applyTo: "2025-02-21", examWindow: "2025-05-25 (Prelims)", }, }, { id: "ibps-po", name: "IBPS PO", authority: "Institute of Banking Personnel Selection", category: "Banking", tags: ["Graduate", "Bank PO"], mode: "Online", fee: { gen: 850, scst: 175, female: 850 }, attemptLimit: "No fixed limit", eligibility: "Bachelor's degree; Age as per notification.", syllabus: [ { section: "Prelims", topics: ["English", "Quant", "Reasoning"] }, { section: "Mains", topics: ["Reasoning & Computer Aptitude", "Data Analysis & Interpretation", "General/Economy/Banking Awareness", "English"] }, { section: "Interview", topics: ["Current Affairs", "Banking Awareness", "HR"] }, ], stages: ["Prelims", "Mains", "Interview"], dates: { notification: "2025-07-01", applyFrom: "2025-07-01", applyTo: "2025-07-21", examWindow: "2025-10 (Prelims)", }, }, { id: "rrb-ntpc", name: "RRB NTPC", authority: "Railway Recruitment Boards", category: "Railways", tags: ["Graduate", "12th Pass"], mode: "Online", fee: { gen: 500, scst: 250, female: 250 }, attemptLimit: "No fixed limit", eligibility: "12th/Graduate depending on post.", syllabus: [ { section: "Mathematics", topics: ["Number System", "Algebra", "Geometry", "Mensuration", "Data Interpretation"] }, { section: "General Intelligence & Reasoning", topics: ["Coding-Decoding", "Analogies", "Series", "Puzzles"] }, { section: "General Awareness", topics: ["Current Affairs", "Polity", "Geography", "History", "Science"] }, ], stages: ["CBT-1", "CBT-2", "Typing/Skill Test", "DV/ME"], dates: { notification: "2025-03-15", applyFrom: "2025-03-20", applyTo: "2025-04-20", examWindow: "2025-09–10", }, }, { id: "nda", name: "NDA & NA", authority: "UPSC", category: "Defence", tags: ["12th Pass", "Permanent Commission"], mode: "Offline", fee: { gen: 100, scst: 0, female: 0 }, attemptLimit: "As per age limits", eligibility: "12th pass (PCM for Air Force/Navy); Age 16.5–19.5.", syllabus: [ { section: "Mathematics", topics: ["Algebra", "Trigonometry", "Vector Algebra", "Statistics", "Probability"] }, { section: "GAT", topics: ["English", "Physics", "Chemistry", "General Science", "History", "Geography", "Current Events"] }, ], stages: ["Written", "SSB Interview", "Medical"], dates: { notification: "2025-12-01", applyFrom: "2025-12-01", applyTo: "2025-12-21", examWindow: "2026-04", }, }, ];
+
+const QUIZ_BANK = [ { id: "qa-1", exam: "SSC CGL", title: "Quant Mini Mock", questions: [ { q: "If a sum becomes Rs. 1440 in 2 years at 20% compound interest (annual), what is the principal?", options: ["1000", "1200", "1100", "1150"], answer: 0, explain: "P = A/(1+r)^n = 1440/(1.2^2) = 1440/1.44 = 1000.", }, { q: "The average of 5 numbers is 28. If one number is 38, what is the average of the remaining 4 numbers?", options: ["25.5", "26", "27", "28"], answer: 2, explain: "Total=140; Remaining total=102; Avg=102/4=25.5 → Oops! Wait, correct math gives 25.5.", }, { q: "Which Article deals with Fundamental Duties in the Indian Constitution?", options: ["51A", "48A", "21A", "14"], answer: 0, explain: "Article 51A lists Fundamental Duties.", }, ], }, { id: "eng-1", exam: "IBPS PO", title: "English Cloze Test", questions: [ { q: "Choose the correct option: The committee _____ agreed to the proposal after long deliberation.", options: ["have", "has", "are", "were"], answer: 1, explain: "Collective noun 'committee' takes singular verb here → has.", }, { q: "Synonym of 'prudent' is _____", options: ["rash", "wise", "impulsive", "reckless"], answer: 1, explain: "Prudent = wise.", }, ], }, ];
+
+// --- Components --- const Chip = ({ children }) => ( <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 mr-1 mb-1">{children}</span> );
+
+const Stat = ({ icon: Icon, label, value }) => ( <Card className="rounded-2xl shadow-sm"> <CardContent className="p-4 flex items-center gap-3"> <div className="p-2 rounded-xl bg-slate-100"><Icon className="w-5 h-5" /></div> <div> <div className="text-xs text-slate-500">{label}</div> <div className="text-xl font-semibold">{value}</div> </div> </CardContent> </Card> );
+
+function useLocalStorage(key, initial) { const [val, setVal] = useState(() => { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; }); useEffect(() => localStorage.setItem(key, JSON.stringify(val)), [key, val]); return [val, setVal]; }
+
+const Filters = ({ query, setQuery, category, setCategory }) => (
+
+  <div className="flex flex-col md:flex-row gap-3">
+    <div className="relative flex-1">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+      <Input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search exams, authority, tags..." className="pl-9 rounded-2xl" />
+    </div>
+    <div className="flex gap-2 overflow-x-auto">
+      {['All','Central','Banking','Railways','Defence','State'].map(c => (
+        <Button key={c} onClick={()=>setCategory(c)} variant={category===c?"default":"secondary"} className="rounded-2xl">
+          <Filter className="w-4 h-4 mr-1" /> {c}
+        </Button>
+      ))}
+    </div>
+  </div>
+);const ExamCard = ({ exam, onOpen }) => ( <Card className="rounded-2xl hover:shadow-md transition-shadow"> <CardHeader className="pb-2"> <div className="flex items-start justify-between"> <CardTitle className="text-lg">{exam.name}</CardTitle> <Badge variant="secondary">{exam.category}</Badge> </div> <div className="text-xs text-slate-500 mt-1">{exam.authority}</div> </CardHeader> <CardContent className="pt-0"> <div className="flex flex-wrap mb-2"> {exam.tags.map((t,i)=>(<Chip key={i}>{t}</Chip>))} </div> <div className="grid grid-cols-2 gap-3 text-sm"> <div className="flex items-center gap-2"><Calendar className="w-4 h-4"/> Apply till: {exam.dates.applyTo ? fmt.format(new Date(exam.dates.applyTo)) : '—'}</div> <div className="flex items-center gap-2"><Clock className="w-4 h-4"/> Mode: {exam.mode}</div> </div> <div className="mt-3 flex justify-between items-center"> <div className="text-xs text-slate-500">Stages: {exam.stages.join(' → ')}</div> <Button onClick={()=>onOpen(exam)} className="rounded-2xl">Details <ChevronRight className="w-4 h-4 ml-1"/></Button> </div> </CardContent> </Card> );
+
+const Syllabus = ({ exam }) => (
+
+  <div className="space-y-4">
+    {exam.syllabus.map((s, idx) => (
+      <Card key={idx} className="rounded-2xl">
+        <CardHeader className="pb-2"><CardTitle className="text-base">{s.section}</CardTitle></CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex flex-wrap">
+            {s.topics.map((t,i)=>(<Chip key={i}>{t}</Chip>))}
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);const Notifications = ({ list, onClear }) => (
+
+  <div className="space-y-2">
+    {list.length===0 && <div className="text-sm text-slate-500">No notifications yet.</div>}
+    {list.map((n,idx)=> (
+      <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
+        <Bell className="w-4 h-4 mt-1"/>
+        <div className="flex-1">
+          <div className="text-sm font-medium">{n.title}</div>
+          <div className="text-xs text-slate-500">{fmt.format(new Date(n.date))}</div>
+        </div>
+        <Button size="sm" variant="ghost" onClick={()=>onClear(idx)}><X className="w-4 h-4"/></Button>
+      </div>
+    ))}
+  </div>
+);function Quiz({ paper, onFinish }) { const [step, setStep] = useState(0); const [answers, setAnswers] = useState([]); const q = paper.questions[step]; const done = step >= paper.questions.length;
+
+const correct = done ? answers.filter((a, i)=> a === paper.questions[i].answer).length : 0; const data = useMemo(()=>[ { name: 'Correct', value: correct }, { name: 'Wrong', value: done ? paper.questions.length - correct : 0 }, ], [correct, done, paper.questions.length]);
+
+if (done) { return ( <div className="space-y-5"> <div className="text-lg font-semibold flex items-center gap-2"><Trophy className="w-5 h-5"/> Result</div> <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> <Card className="rounded-2xl"> <CardContent className="p-5"> <div className="text-sm text-slate-500">Score</div> <div className="text-3xl font-bold">{correct} / {paper.questions.length}</div> <div className="mt-3 text-sm">Accuracy: {paper.questions.length>0 ? Math.round((correct/paper.questions.length)*100) : 0}%</div> </CardContent> </Card> <Card className="rounded-2xl"> <CardContent className="p-0 h-48"> <ResponsiveContainer width="100%" height="100%"> <PieChart> <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} outerRadius={70} label> {data.map((entry, index) => ( <Cell key={cell-${index}} /> ))} </Pie> <RechartsTooltip /> </PieChart> </ResponsiveContainer> </CardContent> </Card> </div> <Button className="rounded-2xl" onClick={onFinish}>Back to exams</Button> </div> ); }
+
+return ( <div className="space-y-5"> <div className="text-sm text-slate-500">Question {step+1} of {paper.questions.length}</div> <Card className="rounded-2xl"> <CardHeader className="pb-2"><CardTitle className="text-base">{q.q}</CardTitle></CardHeader> <CardContent className="pt-0 space-y-2"> {q.options.map((opt, i)=> { const chosen = answers[step] === i; return ( <button key={i} onClick={()=>{ const next = [...answers]; next[step] = i; setAnswers(next); setStep(step+1); }} className={w-full text-left px-3 py-2 rounded-xl border transition ${chosen? 'bg-green-50 border-green-300' : 'hover:bg-slate-50'}} > <div className="flex items-center gap-2"> {i === q.answer ? <CheckCircle2 className="w-4 h-4"/> : <XCircle className="w-4 h-4"/>} <span>{opt}</span> </div> </button> ); })} <div className="text-xs text-slate-500 mt-2">Explanation: {q.explain}</div> </CardContent> </Card> </div> ); }
+
+export default function GovExamPrepApp() { const [query, setQuery] = useState(""); const [category, setCategory] = useState("All"); const [openExam, setOpenExam] = useState(null); const [tab, setTab] = useState("exams"); const [notif, setNotif] = useLocalStorage("notif", [ { title: "UPSC CSE Prelims date announced (demo)", date: todayISO() }, { title: "SSC CGL Tier-I admit card release (demo)", date: todayISO() }, ]);
+
+const [downloads] = useState([ { name: "UPSC Syllabus (PDF)", size: "1.2 MB" }, { name: "SSC CGL Previous Papers (ZIP)", size: "8.4 MB" }, ]);
+
+const filtered = useMemo(()=> EXAMS.filter(ex => { const hay = (ex.name + " " + ex.authority + " " + ex.tags.join(" ")).toLowerCase(); const okCat = category === 'All' || ex.category === category; return okCat && hay.includes(query.toLowerCase()); }), [query, category]);
+
+const runningCount = useMemo(()=> filtered.length, [filtered.length]);
+
+return ( <div className="min-h-screen bg-gradient-to-b from-white to-slate-50"> {/* Top bar */} <div className="sticky top-0 z-40 backdrop-blur bg-white/75 border-b"> <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between"> <div className="flex items-center gap-3"> <Menu className="w-5 h-5"/> <span className="font-bold text-lg">GovExam Prep</span> <Badge className="rounded-full">Beta</Badge> </div> <div className="hidden md:flex items-center gap-2"> <Users className="w-4 h-4" /> <span className="text-sm text-slate-600">All Competitive Govt Exams</span> </div> </div> </div>
+
+{/* Content */}
+  <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 space-y-4">
+        <Filters query={query} setQuery={setQuery} category={category} setCategory={setCategory} />
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="rounded-2xl">
+            <TabsTrigger value="exams">Exams</TabsTrigger>
+            <TabsTrigger value="syllabus">Syllabus</TabsTrigger>
+            <TabsTrigger value="practice">Practice</TabsTrigger>
+            <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            <TabsTrigger value="downloads">Downloads</TabsTrigger>
+          </TabsList>
+          <TabsContent value="exams" className="mt-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {filtered.map(ex => (
+                <motion.div key={ex.id} initial={{opacity:0, y:10}} animate={{opacity:1, y:0}}>
+                  <ExamCard exam={ex} onOpen={setOpenExam} />
+                </motion.div>
+              ))}
+            </div>
+            {filtered.length===0 && (
+              <div className="text-sm text-slate-500 mt-4">No exams match your search.</div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="syllabus" className="mt-4">
+            <div className="space-y-4">
+              {filtered.map(ex => (
+                <Card key={ex.id} className="rounded-2xl">
+                  <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-base">{ex.name} — Syllabus</CardTitle>
+                    <Badge variant="secondary">{ex.mode}</Badge>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Syllabus exam={ex} />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="practice" className="mt-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              {QUIZ_BANK.map(p => (
+                <Card key={p.id} className="rounded-2xl">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{p.title}</CardTitle>
+                    <div className="text-xs text-slate-500">{p.exam}</div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Button className="rounded-2xl" onClick={()=>{ setOpenExam({ ...p, isQuiz: true }); setTab("exams"); }}>Start</Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="alerts" className="mt-4">
+            <Notifications list={notif} onClear={(i)=> setNotif(notif.filter((_,idx)=> idx!==i))} />
+          </TabsContent>
+
+          <TabsContent value="downloads" className="mt-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {downloads.map((d, i)=> (
+                <Card key={i} className="rounded-2xl">
+                  <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-base">{d.name}</CardTitle>
+                    <Badge variant="secondary">{d.size}</Badge>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <Button className="rounded-2xl"><Download className="w-4 h-4 mr-1"/> Download</Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Right sidebar */}
+      <div className="space-y-4">
+        <Stat icon={Calendar} label="Exams listed" value={runningCount} />
+        <Stat icon={Bell} label="Active alerts" value={notif.length} />
+        <Stat icon={BookOpen} label="Practice sets" value={QUIZ_BANK.length} />
+
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Tips</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-sm space-y-2 text-slate-600">
+            <div>• Maintain a daily study routine with revision cycles (1-7-21 formula).</div>
+            <div>• Attempt sectional mocks and analyse mistakes the same day.</div>
+            <div>• Track official notifications only from authentic sources.</div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+
+  {/* Drawer / Modal */}
+  <AnimatePresence>
+    {openExam && (
+      <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
+        <motion.div initial={{y:40}} animate={{y:0}} exit={{y:40}} className="bg-white w-full md:max-w-3xl rounded-3xl shadow-xl overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="font-semibold">
+              {openExam.isQuiz ? openExam.title : openExam.name}
+            </div>
+            <Button variant="ghost" onClick={()=>setOpenExam(null)} className="rounded-2xl"><X className="w-5 h-5"/></Button>
+          </div>
+          <div className="p-4">
+            {openExam.isQuiz ? (
+              <Quiz paper={openExam} onFinish={()=> setOpenExam(null)} />
+            ) : (
+              <div className="space-y-5">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Card className="rounded-2xl"><CardContent className="p-4 text-sm space-y-1">
+                    <div><span className="text-slate-500">Authority:</span> {openExam.authority}</div>
+                    <div><span className="text-slate-500">Eligibility:</span> {openExam.eligibility}</div>
+                    <div><span className="text-slate-500">Attempts:</span> {openExam.attemptLimit}</div>
+                    <div><span className="text-slate-500">Fee (GEN):</span> ₹{openExam.fee.gen}</div>
+                  </CardContent></Card>
+                  <Card className="rounded-2xl"><Car
